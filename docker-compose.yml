@@ -1,0 +1,22 @@
+services: 
+  backend:
+    build: ./15.07.26_offisny_obed #из какой папки собираем образ
+    container_name: office_lunch_backend #название контейнера в докере
+    ports:
+      - "8000:8000" #проброс портов
+    volumes:
+      - backend_data:/app #объем памяти, подключаем для сохранения БД вне контейнера, чтобы все изменения сохранялсь
+    restart: always #перезапуск контейнера
+
+  frontend:
+    build: ./lunch-api-test
+    container_name: office_lunch_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend #запускает фронтенд только после бекэнда
+    restart: always
+
+volumes:
+  backend_data: {}
+  
