@@ -18,7 +18,7 @@ async def get_all_users(db: AsyncSession) -> list[User]:
     return result.scalars().all()
 
 async def get_user_by_id(db: AsyncSession, user_id: int) -> User:
-    result = await db.execute(select(User).where(User.id == user.id))
+    result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code = 404, detail = f'Пользователь с ID {user_id} не найден')
@@ -40,7 +40,7 @@ async def create_session(db: AsyncSession, session_data: SessionCreate) -> Sessi
     return new_session
 
 async def get_active_session(db: AsyncSession) -> list[Session]:
-    result = await db.execute(select(Session).where(SessionStatus == SessionStatus.active))
+    result = await db.execute(select(Session).where(Session.status == SessionStatus.active))
     return  result.scalars().all()
 
 async def get_session_by_id(db: AsyncSession, session_id: int) -> Session:
@@ -103,7 +103,7 @@ async def add_order_item(db: AsyncSession, data: OrderItemCreate) -> OrderItem: 
     # проверяем существование пользователя, блюда в меню
     await get_user_by_id(db, data.user_id)
     menu_item = await get_menu_item_by_id(db, data.menu_item_id)
-    session = await get_session_by_id(db, menu_item)
+    session = await get_session_by_id(db, menu_item.session_id)
     
     if session.status != SessionStatus.active:
         raise HTTPException(status_code=400, detail='Нельзя добавлять меню в неактивную сессию')
@@ -132,6 +132,7 @@ async def add_order_item(db: AsyncSession, data: OrderItemCreate) -> OrderItem: 
             menu_item_id = data.menu_item_id,
             quantity = data.quantity,
         )
+        db.add(new_order)
         await db.flush()               
         await db.refresh(new_order) 
         return new_order           
@@ -155,7 +156,7 @@ async def delete_order_item(db: AsyncSession, order_item_id: int) -> dict:
     if datetime.now() >= session.deadline:
         raise HTTPException(status_code=400, detail='Дедлайн сессии истек')
     # удаляем позицию
-    await db.delete(order_item)
+    db.delete(order_item)
     await db.flush()
     return {'detail': 'Позиция успешно удалена'}
 

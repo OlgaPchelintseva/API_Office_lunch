@@ -9,7 +9,7 @@ router = APIRouter(prefix="/sessions", tags=['Управление сессия�
 
 # POST /sessions
 @router.post('/', response_model=SessionResponse, status_code=201)
-async def creare_new_session(session_data: SessionCreate, db: AsyncSession = Depends(get_db)):
+async def create_new_session(session_data: SessionCreate, db: AsyncSession = Depends(get_db)):
     session = await create_session(db, session_data)
     return session
 
